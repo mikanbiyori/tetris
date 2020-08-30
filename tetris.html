@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>divを下に落ちるようにした</title>
+        <link rel="stylesheet" href="css/reset.css">
+        <style>
+            body, html {
+                margin:0;
+                padding:0;
+            }
+
+            .site-container{
+                width: 700px;
+                height: 1100px;
+                margin: 0 auto;
+             }
+
+            .title-tetris{
+                font-size: 50px;
+                font-weight: bold;
+                color: #ef454a;
+                text-align: center;
+                line-height: 1.7;
+            }
+
+            .tetris-container{
+                width: 700px;
+                height: 1000px;
+                border: black 2px solid;
+                background-color: pink;
+                margin: 0 auto;
+                text-align: center;
+                position: relative;
+            }
+
+            .target-element{
+                width: 100px;
+                height: 100px;
+                background-color: #0d81ac;
+                position: absolute;
+                top: 0;
+                display: none;
+            }
+
+            /*ボタン要素をまとめたdiv*/
+            /*.button_panel{
+
+            }*/
+
+            .start-btn{
+                font-size: 50px;
+                color: #ffffff;
+                font-weight: bold;
+                background-color: hotpink;
+                border-radius: 10px;
+                width: 200px;
+                height: 100px;
+                padding: 2px;
+                box-shadow: 0 3px #000000;
+                cursor: pointer;
+                text-align: center;
+                margin-top: 450px;
+            }
+
+            .restart-btn{
+                font-size: 16px;
+                color: #ffffff;
+                background-color: #1a6093;
+                border-radius: 5px;
+                width: 100px;
+                height: 30px;
+                padding: 2px;
+                margin: 5px 0 0 0;
+                box-shadow: 0 3px #000000;
+                cursor: pointer;
+            }
+
+            .start-btn:hover,.restart-btn:hover{
+                background-color: palevioletred;
+                box-shadow: 0 3px #000080;
+            }
+
+            .start-btn:active,.restart-btn:active{
+                color: #ffffff;
+                background-color: #7d416e;
+                box-shadow: none;
+            }
+        </style>
+        <script>
+            //ページ開いたら実行される処理
+            window.onload = function(){
+                document.getElementById("start_btn").onclick = function() {
+                    //===============================================================================
+                    //============================変数初期化=========================================
+                    //===============================================================================
+                    let target = document.getElementById("target_element");
+                    var client_h = document.getElementById("tetris_container").clientHeight;
+                    var client_w = document.getElementById("tetris_container").clientWidth;
+
+                    //0.01秒ごとに1pxずつ動かす方法を教えている。関数を定義している。まだ実行されていない。
+                    var right_brick_interval; //有効範囲を変える為に定義
+                    var left_brick_interval; //有効範囲を変える為に定義
+                    var count_width = Math.floor(Math.random() * client_w - target.clientWidth);
+                    count_width = count_width - (count_width % 100);
+                    target.style.left = count_width + "px";
+                    var count_height = 0;
+                    var fired = false; //ボタンが押されたかどうかを保管するためのフラグ　ないと右を押したイベントが複数回実行される
+
+                    //===============================================================================
+                    //============================UI操作=========================================
+                    //===============================================================================
+                    //cssで非表示にしたターゲットdivを表示させる
+                    target.style.display ="initial";
+                    //スタートボタンを非表示にする
+                    document.getElementById("start_btn").style.display ="none";
+                    //やりなおしボタンを表示させる
+                    document.getElementById("restart_btn").style.display ="initial";
+                    //やりなおしボタンを非表示にする
+                    document.getElementById("restart_btn").style.display ="none";
+                    //やりなおしボタンをクリックしたときの処理
+                    document.getElementById("restart_btn").onclick = function () {
+                        document.location.reload()　//ページ更新
+                    };
+
+                    //===============================================================================
+                    //============================レンガが下に落ちる処理===============================
+                    //===============================================================================
+                    var move_brick_down = function(){
+                        count_height = count_height + target.clientHeight;
+                        target.style.top = count_height + "px";
+                    };
+
+                    //一定時間ごとに特定の処理を繰り返す処理を変数drop_brickに入れる
+                    var drop_brick = setInterval(function(){
+                        //innerHeightは、水平スクロールバー（表示されている場合）を含む、ブラウザウィンドウの ビューポート (viewport) の高さを返す
+                        //表示域の高さを取得する（borderは含まず、paddingとheightの合計値が取得できる）
+                        if(count_height < client_h - target.clientHeight){
+                            move_brick_down(); //関数を呼んでいる。動かしてという指示。実行されている。
+                        } else {
+                            clearInterval(drop_brick);　//idをclearIntervalで指定している
+                            clearInterval(right_brick_interval);
+                            clearInterval(left_brick_interval);
+                        }
+                    }, 500);
+
+
+
+                    //ボタンが押されたときの処理
+                    document.onkeydown = function (e){
+                        if(fired === false) {
+                            //firedは解雇？
+                            fired = true;
+
+                            //===============================================================================
+                            //===================右ボタン（→つまりキーコード39）が押された時の処理==================
+                            //===============================================================================
+                            //if分岐の処理は、→ボダン（39）を押したときだけ実行される
+                            if(e.keyCode === 39){
+                                //変数を定義
+                                var move_brick_right = function(){
+                                    //count_width + target.clientWidthでターゲットdivの横幅を変数に入れる
+                                    count_width = count_width + target.clientWidth;
+                                    target.style.left = count_width + "px";
+                                };
+
+                                //divが下に落ちた時に右ボタンを短く押したとき動かないようにする
+                                if (count_height < client_h - target.clientHeight) {
+                                    //ボタンを押してすぐ離したときにターゲットdivが動くようにする処理。かつ右の画面を突き破らないようにする。
+                                    if (count_width < client_w - target.clientWidth) {
+                                        move_brick_right();
+                                    }
+                                }
+
+                                //divが下に落ちていないなら、右に動かせるようにする
+                                if (count_height < client_h - target.clientHeight) {
+                                    right_brick_interval = setInterval(function () {
+                                        if (count_width < client_w - target.clientWidth) {
+                                            move_brick_right(); //関数を呼んでいる。動かしてという指示。実行されている。
+                                        } else {
+                                            //@todo　divが右画面を突き破らないように考える
+                                            //@todo　レンガが下に落ちたら移動できないようにする
+                                            clearInterval(right_brick_interval);
+                                        }
+                                    }, 500);
+                                }
+                            }
+
+                            //===============================================================================
+                            //===================左ボタン（←つまりキーコード37）が押された時の処理==================
+                            //===============================================================================
+                            if(e.keyCode === 37){
+                                //変数を定義
+                                var move_brick_left = function(){
+                                    count_width = count_width - target.clientWidth;
+                                    target.style.left = count_width + "px";
+                                };
+
+                                //divが下に落ちた時に左ボタンを短く押したとき動かないようにする
+                                if (count_height < client_h - target.clientHeight) {
+                                    //ボタンを押してすぐ離したときにターゲットdivが動くようにする処理。かつ左の画面を突き破らないようにする。
+                                    if (count_width > 0) {
+                                        move_brick_left();
+                                    }
+                                }
+                                if (count_height < client_h - target.clientHeight) {
+                                    //divが下に落ちていないなら、左に動かせるようにする
+                                    left_brick_interval = setInterval(function(){
+                                        if (count_width > 0) {
+                                            move_brick_left(); //関数を呼んでいる。動かしてという指示。実行されている。
+                                        }else{
+                                            //@todo　divが右画面を突き破らないように考える
+                                            //@todo　レンガが下に落ちたら移動できないようにする
+                                            clearInterval(left_brick_interval);
+                                        }
+                                    }, 500);
+                                }
+                            }
+                        }
+                    };
+
+                    //===============================================================================
+                    //===================ボタンを離したときの処理==================
+                    //===============================================================================
+                    document.onkeyup = function (e){
+                        if(e.keyCode === 39) {
+                            fired = false;
+                            clearInterval(right_brick_interval);　//idをclearIntervalで指定している
+                        }
+                        if(e.keyCode === 37) {
+                            fired = false;
+                            clearInterval(left_brick_interval);　//idをclearIntervalで指定している
+                        }
+                    };
+                };
+            }
+        </script>
+    </head>
+    <body>
+    <p id="title_tetris" class="title-tetris">Tetris</p>
+        <div class="site-container">
+            <div id="tetris_container" class="tetris-container">
+                <div id="target_element" class="target-element"></div>
+                <button id="start_btn" class="start-btn">start</button>
+            </div>
+
+            <div class="button_panel">
+                <button id="restart_btn" class="restart-btn">やりなおし</button>
+            </div>
+        </div>
+    </body>
+</html>
